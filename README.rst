@@ -25,15 +25,17 @@ This formula is young and interacts with a pretty deep technology stack with
 many varied use cases. Contributions in the form of issues, pull requests, or 
 discussions are very welcome.
 
-Availale States
+Available States
 ===============
 
-The default state applied by this formula (e.g. if just applying `helm`) will
-apply the `helm.releases_managed` state, which:
+The default state applied by this formula (e.g. if just applying ``helm``) will
+apply the ``helm.releases_managed`` state, which:
 
 * installs and configures the Helm client; and
 * creates and configures a kubectl config file at a non-standard path (will 
   use default connection parameters).
+
+States:
 
 .. contents::
     :local:
@@ -58,15 +60,15 @@ for the helm binary.
 ------------------
 
 Optionally installs a Tiller deployment to the kubernetes cluster per the
-`helm:client:tiller:install` pillar value. If the pillar value is set to 
+``helm:client:tiller:install`` pillar value. If the pillar value is set to 
 install tiller to the cluster, the version of the tiller installation will
-match the version of the Helm client installed per the `helm:client:version`
+match the version of the Helm client installed per the ``helm:client:version``
 configuration parameter
 
 **includes**:
 
-* `client_installed`
-* `kubectl_configured`
+* `client_installed`_
+* `kubectl_configured`_
 
 ``repos_managed``
 ------------------
@@ -77,7 +79,7 @@ with the remote repository with each state execution.
 
 **includes**:
 
-* `client_installed`
+* `client_installed`_
 
 ``releases_managed``
 ------------------
@@ -91,10 +93,10 @@ re-installation of the release to the cluster.
 
 **includes**:
 
-* `client_installed`
-* `tiller_installed`
-* `kubectl_configured`
-* `repos_managed`
+* `client_installed`_
+* `tiller_installed`_
+* `kubectl_configured`_
+* `repos_managed`_
 
 Availale Modules
 ===============
@@ -103,41 +105,44 @@ To view documentation on the available modules, run:
 
 .. code-block:: shell
   
-  salt '{{ tgt }}' sys.doc helm`
+  salt '{{ tgt }}' sys.doc helm
 
 Sample Pillar
 ==============
 
-See the [pillar.example](pillar.example) for a documented example pillar file.
+See the `pillar.example <pillar.example>`_ for a documented example pillar file.
 
 The default pillar configuration will attempt to install the helm client on the 
 target node and a Tiller deployment to the Kubernetes cluster configured in
-the kubectl config file (per the `helm:kubectl:config_file` pillar.
+the kubectl config file (per the ``helm:kubectl:config_file`` pillar.
 
 Known Issues
 ============
 
-1. Unable to remove all user supplied values
+.. contents::
+    :local:
 
-  If a release previously has had user supplied value overrides (via the 
-  release's `values` key in the pillar), subsequently removing all `values`
-  overrides (so that there is no more `values` key for the release in the 
-  pillar) will not actually update the Helm deployment. To get around this,
-  specify a fake key/value pair in the release's pillar; Tiller will override
-  all previously user-supplied values with the new fake key and value. For 
-  example:
+``1. Unable to remove all user supplied values``
+------------------------------------------------
 
+If a release previously has had user supplied value overrides (via the 
+release's ``values`` key in the pillar), subsequently removing all ``values``
+overrides (so that there is no more ``values`` key for the release in the 
+pillar) will not actually update the Helm deployment. To get around this,
+specify a fake key/value pair in the release's pillar; Tiller will override
+all previously user-supplied values with the new fake key and value. For 
+example:
 
-  .. code:: yaml
-    
-    helm:
-      client:
-        releases:
-          my_release:
-            enabled: true
-            ...
-            values:
-              fake_key: fake_value
+.. code:: yaml
+  
+  helm:
+    client:
+      releases:
+        my_release:
+          enabled: true
+          ...
+          values:
+            fake_key: fake_value
 
 Contributions
 =============
@@ -172,5 +177,5 @@ of a tiller instance to the cluster or release managmeent.
 Development
 ===========
 
-The fastest workflow for development is to use `kitchen converge` when you've
-modified the formula, and `kitchen verify` when you've modified the specs.
+The fastest workflow for development is to use ``kitchen converge`` when you've
+modified the formula, and ``kitchen verify`` when you've modified the specs.
