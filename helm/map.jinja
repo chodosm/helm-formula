@@ -1,55 +1,22 @@
-{%- set source_engine = salt['pillar.get']('helm:client:source:engine') %}
-
-{%- load_yaml as base_defaults %}
-{%- if source_engine == 'git' %}
-Debian:
-  pkgs:
-  - python-psycopg2
-  dir:
-    base: /srv/helm/venv
-    home: /var/lib/helm
-    workspace: /srv/helm/workspace
-RedHat:
-  pkgs:
-  - python-psycopg2
-  dir:
-    base: /srv/helm/venv
-    home: /var/lib/helm
-    workspace: /srv/helm/workspace
-{%- else %}
-Debian:
-  pkgs:
-  - helm
-  dir:
-    base: /usr/lib/helm
-{%- endif %}
-{%- endload %}
-
 {%- load_yaml as base_config %}
 helm:
-  client:
-    version: 2.6.2
-    flavor: linux-amd64
-    download_hash: sha256=ba807d6017b612a0c63c093a954c7d63918d3e324bdba335d67b7948439dbca8
-    bin: /usr/bin/helm
-    helm_home: /srv/helm/home
-    values_dir: /srv/helm/values
-    tiller:
-      install: true
-      namespace: kube-system
-    kubectl:
-      install: false
-      version: 1.6.7
-      download_hash: sha256=54947ef84181e89f9dbacedd54717cbed5cc7f9c36cb37bc8afc9097648e2c91
-      bin: /usr/bin/kubectl
-      config_file: /srv/helm/kubeconfig.yaml
-      config:
-        gce_service_token:
+  version: 2.6.2
+  flavor: linux-amd64
+  download_hash: sha256=ba807d6017b612a0c63c093a954c7d63918d3e324bdba335d67b7948439dbca8
+  bin: /usr/bin/helm
+  helm_home: /srv/helm/home
+  values_dir: /srv/helm/values
+  only: []
+  tiller:
+    install: true
+    namespace: kube-system
+  kubectl:
+    manage_config: true
+    config_file: /srv/helm/.kube/config.yml
+    config: {}
 {%- endload %}
 
-{%- set config = salt['pillar.get']('helm:client', base_config.helm.client, merge=true) %}
-{%- set client = salt['grains.filter_by'](base_defaults, merge=config) %}
-
+{%- set config = salt['pillar.get']('helm', base_config.helm, merge=true) %}
 
 {%- set constants = {
     "helm": {
@@ -58,14 +25,7 @@ helm:
           config.helm_home,
           config.tiller.namespace
       ),
-      "tiller_arg": "- tiller_namespace: \"{}\"".format(config.tiller.namespace),
-      "gce_state_arg": "",
-    },
-    "tiller": {
-      "gce_env_var": "",
-    },
-    "kubectl": {
-      "gce_service_token_path": "/srv/helm/gce_token.json",
+      "tiller_arg": "- tiller_namespace: \"{}\"".format(config.tiller.namespace)
     }
   } 
 %}
@@ -75,16 +35,5 @@ helm:
        "cmd": config.bin + " --host '{}'".format(config.tiller.host),
        "tiller_arg": "- tiller_host: \"{}\"".format(config.tiller.host)
      })
-  %}
-{%- endif %}
-
-{%- if config.kubectl.config.gce_service_token %}
-  {%- do constants.helm.update({
-         "gce_state_arg": "- gce_service_token: \"{}\"".format(constants.kubectl.gce_service_token_path),
-      })
-  %}
-  {%- do constants.tiller.update({
-         "gce_env_var": "- GOOGLE_APPLICATION_CREDENTIALS: \"{}\"".format(constants.kubectl.gce_service_token_path)
-      })
   %}
 {%- endif %}

@@ -2,7 +2,6 @@
 
 include:
   - .client_installed
-  - .kubectl_configured
 
 {%- if config.tiller.install %}
 install_tiller:
@@ -10,11 +9,12 @@ install_tiller:
     - name: {{ constants.helm.cmd }} init --upgrade
     - env:
       - KUBECONFIG: {{ config.kubectl.config_file }}
-      {{ constants.tiller.gce_env_var }}
     - unless: "{{ constants.helm.cmd }} version --server --short | grep -E 'Server: v{{ config.version }}(\\+|$)'"
     - require:
       - sls: {{ slspath }}.client_installed
+      {%- if config.kubectl.manage_config %}
       - sls: {{ slspath }}.kubectl_configured
+      {%- endif %}
 
 wait_for_tiller:
   cmd.run:
@@ -22,10 +22,10 @@ wait_for_tiller:
     - timeout: 30
     - env:
       - KUBECONFIG: {{ config.kubectl.config_file }}
-      {{ constants.tiller.gce_env_var }}
     - require:
-      - sls: {{ slspath }}.client_installed
+      {%- if config.kubectl.manage_config %}
       - sls: {{ slspath }}.kubectl_configured
+      {%- endif %}
     - onchanges:
       - cmd: install_tiller
 {%- endif %}

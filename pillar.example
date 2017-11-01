@@ -57,6 +57,14 @@ helm:
     # download_hash: sha256=ba807d6017b612a0c63c093a954c7d63918d3e324bdba335d67b7948439dbca8
 
     #
+    # Optional listing of release names to which to isolate actions; this is 
+    # most useful when manually executing the state from the command line in
+    # an attempt to control a specific release. Ignored if a falsey value is
+    # supplied (including an empty list)
+    #
+    # only: []
+
+    #
     # Configurations to manage the cluster's Tiller installation
     #
     # tiller:
@@ -84,46 +92,25 @@ helm:
     # Configurations defined to manage the target minion's kubectl installation
     #
     # kubectl:
-      #
-      # Whether kubectl should be installed as part of this formula. 
-      # Defaults to false
-      #
-      # install: false
+      
+      # 
+      # Whether the kubectl config file should be managed by this formula. Set
+      # to True to manage the config using the helm:kubectl:config key.
+      # 
+      # Defaults to True
+      # 
+      # manage_config: True
       
       #
-      # The version of the kubectl binary to install.
-      # Defaults to 1.6.7
+      # The path to the kubeconfig file that should be used by the Helm client.
+      # The kube config file will determine how the Helm client connects to
+      # the Kubernetes cluster. Note that if the helm:kubectl:manage_config 
+      # pillar value is set to True, the config file will be overwritten
+      # with the values configured in helm:kubectl:config.
+      # 
+      # Defaults to /srv/helm/.kube/config.yml
       #
-      # version: 1.6.7
-      
-      #
-      # The path to which the kubectl binary should be installed. Defaults to 
-      # /usr/bin/kubectl
-      #
-      # bin: /usr/bin/kubectl
-
-      #
-      # The hash for the kubectl binary version to install. You must calculate 
-      # the hash for the version and flavor of the binary you install (per the
-      # helm:client:flavor configuration value)
-      # 
-      # 
-      # The binary is downloaded from:
-      # 
-      # https://dl.k8s.io/v[[ client.kubectl.version ]]/kubernetes-client-[[ client.flavor ]].tar.gz
-      # 
-      # 
-      # Defaults to the SHA 256 hash for the Linux distribution of version 1.6.7
-      # 
-      # Here is an example command you can use to calculate the sha256 hash for 
-      # the binary:
-      # 
-      # ```
-      # shasum -a 256 /path/to/kubernetes-client-[[ client.flavor ]].tar.gz
-      # ```
-      # 
-      # download_hash: sha256=54947ef84181e89f9dbacedd54717cbed5cc7f9c36cb37bc8afc9097648e2c91
-      
+      # config_file: /srv/helm/.kube/config.yml
       
       #
       # Configuration parameters that should be applied to the kubectl 
@@ -157,12 +144,7 @@ helm:
       incubator: https://kubernetes-charts-incubator.storage.googleapis.com/
 
     #
-    # The listing of releases that should be managed by the formula. Note that
-    # if configured, the releases listed under this `helm:client:releases` key
-    # will be used as an authoritative, exclusive listing of the releases that
-    # should be configured and deployed to the Tiller installation; any 
-    # release existing in the tiller cluster that is not configured here 
-    # **will be deleted**
+    # The listing of releases that should be managed by the formula.
     #
     releases:
       zoo1:

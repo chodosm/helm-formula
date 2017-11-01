@@ -1,47 +1,66 @@
 ---
 driver:
   name: docker
-  hostname: helm.ci.local
-  #socket: tcp://127.0.0.1:2376
+  hostname: helm.kitchen.local
   use_sudo: false
 
-
+platforms:
+  - name: ubuntu-xenial
+    driver_config:
+      image: 'trevorj/salty-whales:xenial'
+      platform: ubuntu
 
 provisioner:
   name: salt_solo
-  salt_install: bootstrap
-  salt_bootstrap_url: https://bootstrap.saltstack.com
-  salt_version: latest
-  require_chef: false
-  formula: helm
   log_level: info
+  require_chef: false
+  salt_version: latest
+  formula: helm
   state_top:
     base:
-      "*":
+      '*':
         - helm
-  pillars:
-    top.sls:
-      base:
-        "*":
-          - helm
-  grains:
-    noservices: True
-
-platforms:
-  - name: <%=ENV['PLATFORM'] || 'ubuntu-xenial'%>
-    driver_config:
-      image: <%=ENV['PLATFORM'] || 'trevorj/salty-whales:xenial'%>
-      platform: ubuntu
 
 verifier:
   name: inspec
-  sudo: true
-
 
 suites:
-  - name: single
+  - name: defaults
     provisioner:
-      pillars-from-files:
-        helm.sls: tests/pillar/single.sls        
-
-# vim: ft=yaml sw=2 ts=2 sts=2 tw=125
+      pillars:
+        top.sls:
+          base:
+            '*':
+              - helm
+        helm.sls:
+          helm:
+            tiller:
+              install: false
+  - name: helm
+    provisioner:
+      pillars:
+        top.sls:
+          base:
+            '*':
+              - helm
+        helm.sls:
+          helm:
+            bin: /usr/local/bin/helm
+            helm_home: /root/.helm
+            tiller:
+              install: false
+            kubectl:
+              manage_config: true
+              config_file: /srv/helm/kubeconfig.yml
+              config:
+                cluster: 
+                  server: https://kubernetes.example.com
+                  certificate-authority-data: base64_of_ca_certificate
+                cluster_name: kubernetes.example
+                context_name: kubernetes-example
+                user:
+                  username: admin
+                  password: uberadminpass
+                user_name: admin
+            repos:
+              incubator: https://kubernetes-charts-incubator.storage.googleapis.com/

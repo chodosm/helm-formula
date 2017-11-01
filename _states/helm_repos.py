@@ -29,7 +29,7 @@ def managed(name, present={}, absent=[], exclusive=False, helm_home=None):
          'changes': {},
          'result': True,
          'comment': ''}
-  
+
   try:
     result = __salt__['helm.manage_repos'](
       present=present, 
@@ -76,7 +76,6 @@ def updated(name, helm_home=None):
          'changes': {},
          'result': True,
          'comment': 'Successfully synced repositories: ' }
-  
 
   try:
     result = __salt__['helm.update_repos'](helm_home=helm_home)
@@ -86,7 +85,7 @@ def updated(name, helm_home=None):
       r'Successfully got an update from the \"([^\"]+)\"', result['stdout'])
     failed_repos = re.findall(
       r'Unable to get an update from the \"([^\"]+)\"', result['stdout'])
-    
+
     if failed_repos and len(failed_repos) > 0:
       ret['result'] = False
       ret['changes']['succeeded'] = success_repos
@@ -94,7 +93,7 @@ def updated(name, helm_home=None):
       ret['comment'] = 'Failed to sync against some repositories' + cmd_str
     else:
       ret['comment'] += "%s" % success_repos + cmd_str
-    
+
   except CommandExecutionError as e:
     ret['name'] = e.cmd
     ret['result'] = False

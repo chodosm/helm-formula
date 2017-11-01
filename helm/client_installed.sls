@@ -1,7 +1,9 @@
 {%- from slspath + "/map.jinja" import config, constants with context %}
 
-include:
-  - .kubectl_installed
+{%- set tar_opts = "- options: v" %}
+{%- if grains['saltversioninfo'] < [2016, 11] %}
+{%- set tar_opts = "- tar_options: v" %}
+{%- endif %}
 
 {{ constants.helm.tmp }}:
   file.directory:
@@ -11,11 +13,7 @@ include:
     - source: https://storage.googleapis.com/kubernetes-helm/helm-v{{ config.version }}-{{ config.flavor }}.tar.gz
     - source_hash: {{ config.download_hash }}
     - archive_format: tar
-    {%- if grains['saltversioninfo'] < [2016, 11] %}
-    - tar_options: v
-    {%- else %}
-    - options: v
-    {%- endif %}
+    {{ tar_opts }}
     - onlyif:
         - test "{{ config.version }}" -eq "canary" || test ! -e {{ constants.helm.tmp }}/{{ config.flavor }}/helm
     - require:

@@ -12,26 +12,24 @@ class HelmExecutionError(CommandExecutionError):
     self.error = error
 
 def _helm_cmd(*args, **kwargs):
-    if kwargs.get('tiller_host'):
-        addtl_args = ('--host', kwargs['tiller_host'])
-    elif kwargs.get('tiller_namespace'):
-        addtl_args = ('--tiller-namespace', kwargs['tiller_namespace'])
-    else:
-        addtl_args = ()
+  if kwargs.get('tiller_host'):
+      addtl_args = ('--host', kwargs['tiller_host'])
+  elif kwargs.get('tiller_namespace'):
+      addtl_args = ('--tiller-namespace', kwargs['tiller_namespace'])
+  else:
+      addtl_args = ()
 
-    if kwargs.get('helm_home'):
-      addtl_args = addtl_args + ('--home', kwargs['helm_home'])
+  if kwargs.get('helm_home'):
+    addtl_args = addtl_args + ('--home', kwargs['helm_home'])
 
-    env = {}
-    if kwargs.get('kube_config'):
-        env['KUBECONFIG'] = kwargs['kube_config']
-    if kwargs.get('gce_service_token'):
-        env['GOOGLE_APPLICATION_CREDENTIALS'] = \
-            kwargs['gce_service_token']
-    return {
-        'cmd': ('helm',) + args + addtl_args,
-        'env': env,
-    }
+  env = {}
+  if kwargs.get('kube_config'):
+      env['KUBECONFIG'] = kwargs['kube_config']
+
+  return {
+      'cmd': ('helm',) + args + addtl_args,
+      'env': env,
+  }
 
 def _cmd_and_result(*args, **kwargs):
   cmd = _helm_cmd(*args, **kwargs)
@@ -57,7 +55,7 @@ def _parse_release(output):
   if chart_match:
     result['chart'] = chart_match.group(1)
     result['version'] = chart_match.group(2)
-  
+
   user_values_match = re.search(r"(?<=USER-SUPPLIED VALUES\:\n)(\n*.+)+?(?=\n*COMPUTED VALUES\:)", output, re.MULTILINE)
   if user_values_match:
     result['values'] = yaml.deserialize(user_values_match.group(0))
@@ -82,9 +80,8 @@ def _parse_repo(repo_string = None):
     "name": split_string[0].strip(),
     "url": split_string[1].strip()
   }
-  
 
-def _get_release_namespace(name, tiller_namespace="kube-system", **kwargs):
+def _get_release_namespace(name, **kwargs):
   cmd = _helm_cmd("list", name, **kwargs)
   result = __salt__['cmd.run_stdout'](**cmd)
   if not result or len(result.split("\n")) < 2:
@@ -223,7 +220,7 @@ def manage_repos(present={}, absent=[], exclusive=False, **kwargs):
         'url': url, 
         'error': '%s' % e
       })  
-  
+
   #
   # Handle removal of repositories configured to be absent (or not configured
   # to be present if the `exclusive` flag is set)
@@ -232,12 +229,12 @@ def manage_repos(present={}, absent=[], exclusive=False, **kwargs):
   if exclusive:
     present['stable'] = "exclude"
     absent = [name for name in existing_names if not name in present]
-  
+
   for name in absent:
     if not name or not isinstance(name, str):
       raise CommandExecutionError(('Supplied repo name to be absent must be a '
                                    'string: %s' % name))
-    
+
     if name not in existing_names:
       result['already_absent'].append(name)
       continue
@@ -261,7 +258,7 @@ def update_repos(**kwargs):
   '''
   return _cmd_and_result('repo', 'update', **kwargs)
 
-def get_release(name, tiller_namespace="kube-system", **kwargs):
+def get_release(name, **kwargs):
   '''
   Get the parsed release metadata from calling `helm get {{ release }}` for the 
   supplied release name, or None if no release is found. The following keys may 
@@ -274,7 +271,6 @@ def get_release(name, tiller_namespace="kube-system", **kwargs):
     * manifest
     * namespace
   '''
-  kwargs['tiller_namespace'] = tiller_namespace
   cmd = _helm_cmd('get', name, **kwargs)
   result = __salt__['cmd.run_stdout'](**cmd)
   if not result:
@@ -290,68 +286,63 @@ def get_release(name, tiller_namespace="kube-system", **kwargs):
     release['namespace'] = _get_release_namespace(name, **kwargs)
   return release
 
-def release_exists(name, tiller_namespace="kube-system", **kwargs):
+def release_exists(name, **kwargs):
   '''
   Determine whether a release exists in the cluster with the supplied name
   '''
-  kwargs['tiller_namespace'] = tiller_namespace
   return get_release(name, **kwargs) is not None
 
 def release_create(name, chart_name, namespace='default',
-                   version=None, values_file=None,
-                   tiller_namespace='kube-system', **kwargs):
-    '''
-    Install a release. There must not be a release with the supplied name 
-    already installed to the Kubernetes cluster.
+                   version=None, values_file=None, **kwargs):
+  '''
+  Install a release. There must not be a release with the supplied name 
+  already installed to the Kubernetes cluster.
 
-    Note that if a release already exists with the specified name, you'll need
-    to use the release_upgrade function instead; unless the release is in a
-    different namespace, in which case you'll need to delete and purge the 
-    existing release (using release_delete) and *then* use this function to
-    install a new release to the desired namespace.
-    '''
-    args = []
-    if version is not None:
-        args += ['--version', version]
-    if values_file is not None:
-        args += ['--values', values_file]
-    return _cmd_and_result(
-      'install', chart_name,
-      '--namespace', namespace, 
-      '--name', name,  
-      *args, **kwargs
-    )
+  Note that if a release already exists with the specified name, you'll need
+  to use the release_upgrade function instead; unless the release is in a
+  different namespace, in which case you'll need to delete and purge the 
+  existing release (using release_delete) and *then* use this function to
+  install a new release to the desired namespace.
+  '''
+  args = []
+  if version is not None:
+      args += ['--version', version]
+  if values_file is not None:
+      args += ['--values', values_file]
+  return _cmd_and_result(
+    'install', chart_name,
+    '--namespace', namespace, 
+    '--name', name,  
+    *args, **kwargs
+  )
 
-def release_delete(name, tiller_namespace='kube-system', **kwargs):
-    '''
-    Delete and purge any release found with the supplied name.
-    '''
-    kwargs['tiller_namespace'] = tiller_namespace
-    return _cmd_and_result('delete', '--purge', name, **kwargs)
+def release_delete(name, **kwargs):
+  '''
+  Delete and purge any release found with the supplied name.
+  '''
+  return _cmd_and_result('delete', '--purge', name, **kwargs)
 
 
 def release_upgrade(name, chart_name, namespace='default',
-                    version=None, values_file=None,
-                    tiller_namespace='kube-system', **kwargs):
-    '''
-    Upgrade an existing release. There must be a release with the supplied name
-    already installed to the Kubernetes cluster.
+                    version=None, values_file=None, **kwargs):
+  '''
+  Upgrade an existing release. There must be a release with the supplied name
+  already installed to the Kubernetes cluster.
 
-    If attempting to change the namespace for the release, this function will
-    fail; you will need to first delete and purge the release and then use the
-    release_create function to create a new release in the desired namespace.
-    '''
-    kwargs['tiller_namespace'] = tiller_namespace
-    args = []
-    if version is not None:
-      args += ['--version', version]
-    if values_file is not None:
-      args += ['--values', values_file]
-    return _cmd_and_result(
-      'upgrade', name, chart_name,
-      '--namespace', namespace,  
-      *args, **kwargs
-    )
+  If attempting to change the namespace for the release, this function will
+  fail; you will need to first delete and purge the release and then use the
+  release_create function to create a new release in the desired namespace.
+  '''
+  args = []
+  if version is not None:
+    args += ['--version', version]
+  if values_file is not None:
+    args += ['--values', values_file]
+  return _cmd_and_result(
+    'upgrade', name, chart_name,
+    '--namespace', namespace,  
+    *args, **kwargs
+  )
 
 def install_chart_dependencies(chart_path, **kwargs):
   '''
