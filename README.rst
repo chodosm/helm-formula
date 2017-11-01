@@ -33,7 +33,7 @@ apply the `helm.releases_managed` state, which:
 
 * installs and configures the Helm client; and
 * creates and configures a kubectl config file at a non-standard path (will 
-use default connection parameters).
+  use default connection parameters).
 
 .. contents::
     :local:
@@ -64,6 +64,7 @@ match the version of the Helm client installed per the `helm:client:version`
 configuration parameter
 
 **includes**:
+
 * `client_installed`
 * `kubectl_configured`
 
@@ -75,6 +76,7 @@ are registered at the configured helm home, and synchronizes the local cache
 with the remote repository with each state execution.
 
 **includes**:
+
 * `client_installed`
 
 ``releases_managed``
@@ -88,6 +90,7 @@ Note that changes to an existing release's namespace will trigger a deletion and
 re-installation of the release to the cluster.
 
 **includes**:
+
 * `client_installed`
 * `tiller_installed`
 * `kubectl_configured`
@@ -98,7 +101,9 @@ Availale Modules
 
 To view documentation on the available modules, run: 
 
-`salt '{{ tgt }}' sys.doc helm`
+.. code-block:: shell
+  
+  salt '{{ tgt }}' sys.doc helm`
 
 Sample Pillar
 ==============
@@ -114,16 +119,17 @@ Known Issues
 
 1. Unable to remove all user supplied values
 
-If a release previously has had user supplied value overrides (via the 
-release's `values` key in the pillar), subsequently removing all `values`
-overrides (so that there is no more `values` key for the release in the 
-pillar) will not actually update the Helm deployment. To get around this,
-specify a fake key/value pair in the release's pillar; Tiller will override
-all previously user-supplied values with the new fake key and value. For 
-example:
+  If a release previously has had user supplied value overrides (via the 
+  release's `values` key in the pillar), subsequently removing all `values`
+  overrides (so that there is no more `values` key for the release in the 
+  pillar) will not actually update the Helm deployment. To get around this,
+  specify a fake key/value pair in the release's pillar; Tiller will override
+  all previously user-supplied values with the new fake key and value. For 
+  example:
 
 
-.. code-block:: yaml
+  .. code:: yaml
+    
     helm:
       client:
         releases:
@@ -139,7 +145,7 @@ Contributions
 Contributions are always welcome. The main development guidelines include:
 
 * write clean code (proper YAML+Jinja syntax, no trailing whitespaces, no empty 
-lines with whitespaces
+  lines with whitespaces
 * set sane default settings
 * test your code
 * update README.rst doc
