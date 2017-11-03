@@ -2,6 +2,9 @@
 helm-formula
 ==================================
 
+.. image:: https://travis-ci.org/saltstack-formulas/helm-formula.svg?branch=master
+    :target: https://travis-ci.org/saltstack-formulas/helm-formula
+
 This formula installs and configures the Helm client on the target minion and 
 optionally deploys Tiller to the configured Kubernetes cluster. This formula
 is additionally capable of proxying management of the releases deployed through
