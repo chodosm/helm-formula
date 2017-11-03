@@ -1,0 +1,9 @@
+language: ruby
+sudo: required
+cache: bundler
+services:
+  - docker
+rvm:
+  - 2.3.5
+script:
+  - bundle exec kitchen test
